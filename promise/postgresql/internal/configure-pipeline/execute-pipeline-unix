@@ -1,0 +1,43 @@
+#!/bin/sh
+
+set -eux
+
+if [ "$KRATIX_WORKFLOW_TYPE" = "resource" ]; then
+  # Read current values from the provided resource request
+  export name="$(yq eval '.metadata.name' /kratix/input/object.yaml)"
+  export namespace="$(yq eval '.metadata.namespace' /kratix/input/object.yaml)"
+  export size="$(yq eval '.spec.size' /kratix/input/object.yaml)"
+  export database="$(yq eval '.spec.database' /kratix/input/object.yaml)"
+
+  # Set defaults based on size
+  export storage="1Gi"
+  export replicas=1
+
+  if [ "$size" = "medium" ]; then
+    storage="5Gi"
+  elif [ "$size" = "large" ]; then
+    storage="10Gi"
+    replicas=2
+  fi
+
+  # Replace placeholders with user provided values
+  cat /tmp/transfer/postgresql-instance.yaml | \
+    sed "s/placeholder-name/$name/g" | \
+    sed "s/placeholder-namespace/$namespace/g" | \
+    sed "s/placeholder-database/$database/g" | \
+    yq eval ".spec.replicas = $replicas" | \
+    yq eval ".spec.template.spec.volumes[0].persistentVolumeClaim.claimName = \"${name}-pvc\"" | \
+    yq eval "(.spec.template.spec.containers[0].env[] | select(.name == \"POSTGRES_PASSWORD\").valueFrom.secretKeyRef.name) = \"${name}-secret\"" | \
+    yq eval "(.. | select(has(\"claimName\")) | .claimName) = \"${name}-pvc\"" | \
+    yq eval "(.. | select(has(\"storage\")) | .storage) = \"$storage\"" - \
+    > /kratix/output/postgresql-instance.yaml
+  exit 0
+fi
+
+if [ "$KRATIX_WORKFLOW_TYPE" = "promise" ]; then
+  cp -r /tmp/transfer/dependencies/* /kratix/output/
+  exit 0
+fi
+
+echo "unsupported KRATIX_WORKFLOW_TYPE: $KRATIX_WORKFLOW_TYPE"
+exit 1

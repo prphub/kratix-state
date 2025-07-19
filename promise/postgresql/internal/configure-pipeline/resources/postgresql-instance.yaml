@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder-name
+  namespace: placeholder-namespace
+  labels:
+    app: postgresql
+    instance: placeholder-name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+      instance: placeholder-name
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        instance: placeholder-name
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: placeholder-database
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: placeholder-name-secret
+              key: password
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        volumeMounts:
+        - name: postgresql-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: postgresql-storage
+        persistentVolumeClaim:
+          claimName: placeholder-name-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: placeholder-name-service
+  namespace: placeholder-namespace
+  labels:
+    app: postgresql
+    instance: placeholder-name
+spec:
+  selector:
+    app: postgresql
+    instance: placeholder-name
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgresql
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: placeholder-name-pvc
+  namespace: placeholder-namespace
+  labels:
+    app: postgresql
+    instance: placeholder-name
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: placeholder-name-secret
+  namespace: placeholder-namespace
+  labels:
+    app: postgresql
+    instance: placeholder-name
+type: Opaque
+data:
+  password: cG9zdGdyZXMxMjM=  # postgres123
