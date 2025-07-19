@@ -1,0 +1,12 @@
+apiVersion: platform.kratix.io/v1alpha1
+kind: GitStateStore
+metadata:
+  name: default
+spec:
+  url: <your-git-repo-url>
+  branch: main
+  path: /
+  authMethod: basicAuth
+  secretRef:
+    name: git-creds
+    namespace: common-secrets

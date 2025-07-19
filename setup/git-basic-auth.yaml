@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: git-creds
+  namespace: common-secrets
+type: Opaque
+data:
+  username: <your-git-username-base64>
+  password: <your-git-password-base64>

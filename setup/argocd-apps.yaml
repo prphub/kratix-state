@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kratix-workload-dependencies
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: <your-git-repo-url>
+    targetRevision: HEAD
+    path: worker/dependencies
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kratix-workload-resources
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: <your-git-repo-url>
+    targetRevision: HEAD
+    path: worker/resources
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
