@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-final-test
+  namespace: postgres-final-testspace
+  labels:
+    app: postgresql
+    instance: postgres-final-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+      instance: postgres-final-test
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        instance: postgres-final-test
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: finaltest
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-final-test-secret
+              key: password
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        volumeMounts:
+        - name: postgresql-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: postgresql-storage
+        persistentVolumeClaim:
+          claimName: postgres-final-test-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-final-test-service
+  namespace: postgres-final-testspace
+  labels:
+    app: postgresql
+    instance: postgres-final-test
+spec:
+  selector:
+    app: postgresql
+    instance: postgres-final-test
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgresql
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-final-test-pvc
+  namespace: postgres-final-testspace
+  labels:
+    app: postgresql
+    instance: postgres-final-test
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-final-test-secret
+  namespace: postgres-final-testspace
+  labels:
+    app: postgresql
+    instance: postgres-final-test
+type: Opaque
+data:
+  password: cG9zdGdyZXMxMjM=  # postgres123

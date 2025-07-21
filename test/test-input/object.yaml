@@ -1,0 +1,8 @@
+apiVersion: marketplace.kratix.io/v1alpha1
+kind: postgresql
+metadata:
+  name: postgres-test-input-object
+  namespace: default
+spec:
+  size: small
+  database: finaltest
