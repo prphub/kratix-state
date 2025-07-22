@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 set -eux
 
@@ -20,17 +20,11 @@ if [ "$KRATIX_WORKFLOW_TYPE" = "resource" ]; then
     replicas=2
   fi
 
-  # Replace placeholders with user provided values
-  cat /tmp/transfer/postgresql-instance.yaml | \
-    sed "s/placeholder-name/$name/g" | \
-    sed "s/placeholder-namespace/$namespace/g" | \
-    sed "s/placeholder-database/$database/g" | \
-    yq eval ".spec.replicas = $replicas" | \
-    yq eval ".spec.template.spec.volumes[0].persistentVolumeClaim.claimName = \"${name}-pvc\"" | \
-    yq eval "(.spec.template.spec.containers[0].env[] | select(.name == \"POSTGRES_PASSWORD\").valueFrom.secretKeyRef.name) = \"${name}-secret\"" | \
-    yq eval "(.. | select(has(\"claimName\")) | .claimName) = \"${name}-pvc\"" | \
-    yq eval "(.. | select(has(\"storage\")) | .storage) = \"$storage\"" - \
-    > /kratix/output/postgresql-instance.yaml
+  # Process the template with multiple documents using sed like Redis does
+  sed -e "s/placeholder-name/${name}/g" \
+      -e "s/placeholder-namespace/${namespace}/g" \
+      -e "s/placeholder-database/${database}/g" \
+      /tmp/transfer/postgresql-instance.yaml > /kratix/output/postgresql-instance.yaml
   exit 0
 fi
 

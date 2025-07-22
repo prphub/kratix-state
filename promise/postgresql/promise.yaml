@@ -53,11 +53,12 @@ spec:
           metadata:
             name: instance-configure
           spec:
+            containers:
+            - image: ghcr.io/prphub/kratix-state/postgresql-configure-pipeline:v0.1.0
+              name: postgresql-configure-pipeline
+              imagePullPolicy: Always
             imagePullSecrets:
             - name: ghcr-secret
-            containers:
-            - image: ghcr.io/prphub/kratix-state/postgresql-configure-pipeline:v0.1.4
-              name: postgresql-configure-pipeline
     promise:
       configure:
         - apiVersion: platform.kratix.io/v1alpha1
@@ -65,9 +66,10 @@ spec:
           metadata:
             name: promise-configure
           spec:
+            containers:
+            - image: ghcr.io/prphub/kratix-state/postgresql-configure-pipeline:v0.1.0
+              name: postgresql-configure-pipeline
+              imagePullPolicy: Always
             imagePullSecrets:
             - name: ghcr-secret
-            containers:
-            - image: ghcr.io/prphub/kratix-state/postgresql-configure-pipeline:v0.1.4
-              name: postgresql-configure-pipeline
 status: {}

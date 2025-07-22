@@ -1,5 +1,3 @@
-# File: postgresql/README.md
-
 # PostgreSQL Promise for Kratix
 
 This Promise provides a PostgreSQL database service on Kratix, allowing teams to easily provision PostgreSQL instances with various configurations.

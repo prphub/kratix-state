@@ -7,8 +7,7 @@ RUN [ "mkdir", "/tmp/transfer" ]
 RUN apk update && apk add --no-cache yq
 
 ADD resources/ /tmp/transfer/
-COPY execute-pipeline execute-pipeline
-RUN chmod +x execute-pipeline
+ADD execute-pipeline execute-pipeline
 
 CMD [ "sh", "-c", "./execute-pipeline" ]
 ENTRYPOINT []
