@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Building ServiceNow Promise pipeline image (following Ansible Job Launcher pattern)..."
+
+# Build single pipeline image
+echo "Building ServiceNow pipeline..."
+cd internal/configure-pipeline
+docker build -t ghcr.io/syntasso/kratix-marketplace/servicenow-pipeline:v1.0.0 .
+echo "✅ ServiceNow pipeline built"
+
+cd ../..
+
+echo "✅ Pipeline image built successfully"
+echo ""
+echo "To push image to registry:"
+echo "  docker push ghcr.io/syntasso/kratix-marketplace/servicenow-pipeline:v1.0.0"

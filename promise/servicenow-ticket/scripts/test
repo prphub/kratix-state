@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Testing ServiceNow Promise..."
+
+# Test Promise installation
+test_promise() {
+    echo "Testing Promise installation..."
+    kubectl get crd servicenowrequests.marketplace.kratix.io
+    kubectl get promise servicenow-ticket
+    echo "✅ Promise installation test passed"
+}
+
+# Test resource request with auto-approval
+test_resource_request() {
+    echo "Testing resource request..."
+    
+    # Create test request with auto-approval
+    kubectl apply -f - <<EOF
+apiVersion: marketplace.kratix.io/v1
+kind: ServiceNowRequest
+metadata:
+  name: test-postgresql
+  namespace: default
+spec:
+  promise_name: postgresql
+  description: "Test PostgreSQL provisioning via ServiceNow"
+  requested_by: "test@example.com"
+  auto_approve: true
+  resource_request:
+    apiVersion: marketplace.kratix.io/v1alpha1
+    kind: postgresql
+    metadata:
+      name: test-db
+      namespace: default
+    spec:
+      teamId: test-team
+      env: dev
+      size: small
+EOF
+
+    # Wait for provisioning
+    echo "Waiting for provisioning to complete..."
+    kubectl wait servicenowrequests.marketplace.kratix.io test-postgresql \
+        --for=jsonpath='{.status.approval_state}'=provisioned --timeout=300s || true
+    
+    # Check if PostgreSQL resource was created
+    kubectl get postgresql.marketplace.kratix.io test-db -n default
+    
+    echo "✅ Resource request test passed"
+    
+    # Cleanup
+    kubectl delete servicenowrequests.marketplace.kratix.io test-postgresql || true
+    kubectl delete postgresql.marketplace.kratix.io test-db || true
+}
+
+if [ "$1" = "promise" ]; then
+    test_promise
+else
+    test_resource_request
+fi

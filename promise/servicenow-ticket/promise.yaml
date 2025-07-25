@@ -1,0 +1,152 @@
+apiVersion: platform.kratix.io/v1alpha1
+kind: Promise
+metadata:
+  name: servicenow-ticket
+  labels:
+    kratix.io/promise-version: v1.0.0
+spec:
+  api:
+    apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    metadata:
+      name: servicenowrequests.marketplace.kratix.io
+    spec:
+      group: marketplace.kratix.io
+      names:
+        kind: ServiceNowRequest
+        plural: servicenowrequests
+        singular: servicenowrequest
+      scope: Namespaced
+      versions:
+        - name: v1
+          schema:
+            openAPIV3Schema:
+              properties:
+                spec:
+                  properties:
+                    promise_name:
+                      description: The name of the Kratix promise to provision (e.g., postgresql, redis)
+                      type: string
+                    description:
+                      description: Description of the service provisioning request
+                      type: string
+                    requested_by:
+                      description: Email or username of the requester
+                      type: string
+                    priority:
+                      description: Priority level of the request
+                      type: string
+                      enum:
+                        - low
+                        - medium
+                        - high
+                        - critical
+                      default: medium
+                    auto_approve:
+                      description: Whether to auto-approve the request (skips ServiceNow approval)
+                      type: boolean
+                      default: false
+                    resource_request:
+                      description: The actual resource request spec to create after approval
+                      type: object
+                      additionalProperties: true
+                  type: object
+                  required:
+                    - promise_name
+                    - description
+                    - requested_by
+                    - resource_request
+                status:
+                  properties:
+                    ticket_id:
+                      description: ServiceNow ticket ID
+                      type: string
+                    ticket_number:
+                      description: ServiceNow ticket number
+                      type: string
+                    ticket_url:
+                      description: URL to the ServiceNow ticket
+                      type: string
+                    status:
+                      description: Current status of the ticket
+                      type: string
+                    approval_state:
+                      description: Approval state (pending, approved, rejected)
+                      type: string
+                    provisioned_resource:
+                      description: Reference to the provisioned resource
+                      type: string
+                    message:
+                      description: Status message or error details
+                      type: string
+                    created_at:
+                      description: Timestamp when the ticket was created
+                      type: string
+                    approved_at:
+                      description: Timestamp when the ticket was approved
+                      type: string
+                    provisioned_at:
+                      description: Timestamp when the service was provisioned
+                      type: string
+                  type: object
+              type: object
+          served: true
+          storage: true
+          subresources:
+            status: {}
+  workflows:
+    promise: {}
+    resource:
+      configure:
+        # Single pipeline following Ansible Job Launcher pattern
+        - apiVersion: platform.kratix.io/v1alpha1
+          kind: Pipeline
+          metadata:
+            name: servicenow-pipeline
+          spec:
+            rbac:
+              permissions:
+                - apiGroups:
+                    - ""
+                  resources:
+                    - secrets
+                  verbs:
+                    - get
+                  resourceNames:
+                    - servicenow-credentials
+                  resourceNamespace: kratix-platform-system
+                - apiGroups:
+                    - marketplace.kratix.io
+                  resources:
+                    - servicenowrequests
+                    - postgresql
+                    - redis
+                  verbs:
+                    - get
+                    - create
+                    - update
+                    - patch
+            containers:
+              - image: ghcr.io/prphub/kratix-state/servicenow-configure-pipeline:v0.1.0
+                name: servicenow-processor
+                imagePullPolicy: Always
+                env:
+                  - name: SERVICENOW_INSTANCE
+                    valueFrom:
+                      secretKeyRef:
+                        name: servicenow-credentials
+                        key: instance
+                  - name: SERVICENOW_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: servicenow-credentials
+                        key: username
+                  - name: SERVICENOW_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: servicenow-credentials
+                        key: password
+                  - name: SERVICENOW_TABLE
+                    value: "u_kratix_ticket"
+            imagePullSecrets:
+              - name: ghcr-secret

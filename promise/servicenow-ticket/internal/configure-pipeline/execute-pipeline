@@ -1,0 +1,123 @@
+#!/usr/bin/env sh
+
+set -eux
+
+# Source utility functions (using sh syntax)
+. ./scripts/servicenow-utils.sh
+
+# Read current values from the provided resource request (like PostgreSQL)
+export name="$(yq eval '.metadata.name' /kratix/input/object.yaml)"
+export namespace="$(yq eval '.metadata.namespace' /kratix/input/object.yaml)"
+export promise_name="$(yq eval '.spec.promise_name' /kratix/input/object.yaml)"
+export description="$(yq eval '.spec.description' /kratix/input/object.yaml)"
+export requested_by="$(yq eval '.spec.requested_by' /kratix/input/object.yaml)"
+export priority="$(yq eval '.spec.priority // \"medium\"' /kratix/input/object.yaml)"
+export auto_approve="$(yq eval '.spec.auto_approve // false' /kratix/input/object.yaml)"
+
+echo "=== ServiceNow Request Processor ==="
+echo "Resource: ${name}"
+echo "Promise: ${promise_name}"
+echo "Auto Approve: ${auto_approve}"
+
+# Check if already processed
+existing_state=$(kubectl get servicenowrequests.marketplace.kratix.io ${name} -n ${namespace} -o jsonpath='{.status.approval_state}' 2>/dev/null || echo "")
+
+if [ "${existing_state}" = "provisioned" ]; then
+    echo "Request already processed and provisioned, exiting..."
+    exit 0
+fi
+
+if [ "${existing_state}" = "rejected" ]; then
+    echo "Request was rejected, exiting..."
+    exit 1
+fi
+
+# Validate environment
+validate_environment
+
+# Create ServiceNow ticket if auto_approve is false
+if [ "${auto_approve}" = "false" ]; then
+    echo "Creating ServiceNow ticket for approval..."
+    
+    request_payload=$(cat <<EOF
+{
+    "u_kratix_request_id": "${name}",
+    "u_description": "${description}",
+    "u_requested_by": "${requested_by}",
+    "u_service_type": "${promise_name}",
+    "u_status": "open",
+    "u_priority": "${priority}",
+    "u_auto_approve": false
+}
+EOF
+)
+    
+    echo "Request payload: ${request_payload}"
+    
+    response=$(curl -s -u "${SERVICENOW_USERNAME}:${SERVICENOW_PASSWORD}" \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        -X POST \
+        -d "${request_payload}" \
+        "https://${SERVICENOW_INSTANCE}.service-now.com/api/now/table/${SERVICENOW_TABLE}")
+    
+    echo "ServiceNow Response: ${response}"
+    
+    ticket_id=$(echo "${response}" | jq -r '.result.sys_id // empty')
+    ticket_number=$(echo "${response}" | jq -r '.result.number // empty')
+    
+    if [ -z "${ticket_id}" ] || [ "${ticket_id}" = "null" ]; then
+        echo "Failed to create ServiceNow ticket"
+        exit 1
+    fi
+    
+    echo "ServiceNow ticket created: ${ticket_number}"
+    echo "Manual approval required. Exiting pipeline..."
+    
+    # Update resource status
+    status_update=$(cat <<EOF
+{
+    "status": {
+        "approval_state": "pending",
+        "message": "ServiceNow ticket ${ticket_number} created. Waiting for approval.",
+        "ticket_id": "${ticket_id}",
+        "ticket_number": "${ticket_number}",
+        "created_at": "$(date -Iseconds)"
+    }
+}
+EOF
+)
+    
+    kubectl patch servicenowrequests.marketplace.kratix.io ${name} -n ${namespace} \
+        --type=merge -p "${status_update}" || echo "Failed to update resource status"
+    
+    exit 0
+fi
+
+# Auto-approve case - proceed with provisioning
+echo "Auto-approve enabled. Proceeding with provisioning..."
+
+# Extract the resource request from spec and write to output (like PostgreSQL)
+yq eval '.spec.resource_request' /kratix/input/object.yaml > /kratix/output/${promise_name}-resource.yaml
+
+resource_name=$(yq eval '.metadata.name' /kratix/output/${promise_name}-resource.yaml)
+
+echo "Resource request created: ${resource_name}"
+
+# Update resource status
+status_update=$(cat <<EOF
+{
+    "status": {
+        "approval_state": "provisioned",
+        "message": "Resource ${resource_name} provisioned successfully (auto-approved)",
+        "provisioned_resource": "${resource_name}",
+        "provisioned_at": "$(date -Iseconds)"
+    }
+}
+EOF
+)
+
+kubectl patch servicenowrequests.marketplace.kratix.io ${name} -n ${namespace} \
+    --type=merge -p "${status_update}" || echo "Failed to update resource status"
+
+echo "ServiceNow request processor completed successfully"
