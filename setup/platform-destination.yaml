@@ -1,0 +1,11 @@
+apiVersion: platform.kratix.io/v1alpha1
+kind: Destination
+metadata:
+  name: platform
+  labels:
+    environment: platform
+spec:
+  path: platform
+  stateStoreRef:
+    name: default
+    kind: GitStateStore

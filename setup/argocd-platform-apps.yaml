@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kratix-platform-dependencies
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/prphub/kratix-state.git
+    targetRevision: HEAD
+    path: platform/dependencies
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kratix-platform-resources
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/prphub/kratix-state.git
+    targetRevision: HEAD
+    path: platform/resources
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true

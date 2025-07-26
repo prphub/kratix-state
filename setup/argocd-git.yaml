@@ -7,6 +7,6 @@ metadata:
     argocd.argoproj.io/secret-type: repository
 stringData:
   type: git
-  url: <your-git-repo-url>
-  username: <your-git-username-base64>
-  password: <your-git-password-base64>
+  url: <your-git-repo-url> # Not base64 encoded
+  username: <your-git-username> # Not base64 encoded
+  password: <your-git-password> # Not base64 encoded
