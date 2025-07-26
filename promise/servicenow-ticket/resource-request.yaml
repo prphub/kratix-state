@@ -1,15 +1,14 @@
----
 apiVersion: marketplace.kratix.io/v1
 kind: ServiceNowRequest
 metadata:
-  name: postgresql-example
+  name: postgres-servicenow
   namespace: default
 spec:
   promise_name: postgresql
   description: "Provision PostgreSQL database for project X development environment"
   requested_by: "developer@company.com"
   priority: medium
-  auto_approve: false
+  auto_approve: true
   resource_request:
     apiVersion: marketplace.kratix.io/v1alpha1
     kind: postgresql
@@ -17,28 +16,5 @@ spec:
       name: project-x-db
       namespace: default
     spec:
-      teamId: dev-team
-      env: dev
       size: small
----
-apiVersion: marketplace.kratix.io/v1
-kind: ServiceNowRequest
-metadata:
-  name: redis-cache-example
-  namespace: default
-spec:
-  promise_name: redis
-  description: "Deploy Redis cache for session management in production"
-  requested_by: "ops-team@company.com"
-  priority: high
-  auto_approve: false
-  resource_request:
-    apiVersion: marketplace.kratix.io/v1alpha1
-    kind: redis
-    metadata:
-      name: session-cache
-      namespace: default
-    spec:
-      teamId: ops-team
-      env: prod
-      size: medium
+      database: myapp

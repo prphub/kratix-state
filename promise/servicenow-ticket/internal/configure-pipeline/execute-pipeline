@@ -5,7 +5,7 @@ set -eux
 # Source utility functions (using sh syntax)
 . ./scripts/servicenow-utils.sh
 
-# Read current values from the provided resource request (like PostgreSQL)
+# Read current values from the provided resource request
 export name="$(yq eval '.metadata.name' /kratix/input/object.yaml)"
 export namespace="$(yq eval '.metadata.namespace' /kratix/input/object.yaml)"
 export promise_name="$(yq eval '.spec.promise_name' /kratix/input/object.yaml)"
@@ -97,10 +97,10 @@ fi
 # Auto-approve case - proceed with provisioning
 echo "Auto-approve enabled. Proceeding with provisioning..."
 
-# Extract the resource request from spec and write to output (like PostgreSQL)
-yq eval '.spec.resource_request' /kratix/input/object.yaml > /kratix/output/${promise_name}-resource.yaml
+# Extract the resource request from spec and write to output
+yq eval '.spec.resource_request' /kratix/input/object.yaml > /kratix/output/${promise_name}.yaml
 
-resource_name=$(yq eval '.metadata.name' /kratix/output/${promise_name}-resource.yaml)
+resource_name=$(yq eval '.metadata.name' /kratix/output/${promise_name}.yaml)
 
 echo "Resource request created: ${resource_name}"
 

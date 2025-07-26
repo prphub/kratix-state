@@ -1,0 +1,10 @@
+apiVersion: v1
+data:
+  instance: <your-servicenow-instance-base64>
+  password: <your-servicenow-password-base64>
+  username: <your-servicenow-username-base64>
+kind: Secret
+metadata:
+  name: servicenow-credentials
+  namespace: common-secrets
+type: Opaque
