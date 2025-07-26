@@ -1,0 +1,8 @@
+apiVersion: marketplace.kratix.io/v1alpha1
+kind: postgresql
+metadata:
+  name: project-x-db
+  namespace: default
+spec:
+  database: myapp
+  size: small
