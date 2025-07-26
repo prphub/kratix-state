@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: project-x-db
-  namespace: project-x-dbspace
+  namespace: default
   labels:
     app: postgresql
     instance: project-x-db
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: project-x-db-service
-  namespace: project-x-dbspace
+  namespace: default
   labels:
     app: postgresql
     instance: project-x-db
@@ -73,7 +73,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: project-x-db-pvc
-  namespace: project-x-dbspace
+  namespace: default
   labels:
     app: postgresql
     instance: project-x-db
@@ -89,7 +89,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: project-x-db-secret
-  namespace: project-x-dbspace
+  namespace: default
   labels:
     app: postgresql
     instance: project-x-db
