@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+root="$( cd $(dirname $0)/.. && pwd)"
+
+promise_name="$(basename "$(dirname "${root}")")"
+
+
+wcrbin=worker-resource-builder
+if ! type -p $wcrbin > /dev/null; then
+  wcrbin=${root}/scripts/worker-resource-builder
+  if [ ! -f $wcrbin ]; then
+    echo "please download the worker-resource-builder binary and place it in the scripts directory"
+    exit 1
+  fi
+fi
+
+if [ ! -d "${root}/dependencies" ]; then
+  exit 0
+fi
+
+promise_contents=$(${wcrbin} \
+  -resources-dir "${root}/dependencies" \
+  -promise "${root}/../promise.yaml")
+
+echo "$promise_contents" > "${root}/../promise.yaml"

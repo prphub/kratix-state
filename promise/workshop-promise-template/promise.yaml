@@ -1,0 +1,9 @@
+apiVersion: platform.kratix.io/v1alpha1
+kind: Promise
+metadata:
+  name: jenkins
+  namespace: default
+spec:
+  #dependencies:
+  #api:
+  #workflows:
