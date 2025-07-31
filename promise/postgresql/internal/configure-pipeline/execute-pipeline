@@ -21,8 +21,8 @@ if [ "$KRATIX_WORKFLOW_TYPE" = "resource" ]; then
   fi
 
   # Process the template with multiple documents using sed like Redis does
-  sed -e "s/placeholder-name/${name}/g" \
-      -e "s/placeholder-namespace/${namespace}/g" \
+  sed -e "s/placeholder-namespace/${namespace}/g" \
+      -e "s/placeholder-name/${name}/g" \
       -e "s/placeholder-database/${database}/g" \
       /tmp/transfer/postgresql-instance.yaml > /kratix/output/postgresql-instance.yaml
   exit 0
