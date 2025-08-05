@@ -1,6 +1,6 @@
 apiVersion: example.promise.syntasso.io/v1
-kind: # kind
+kind: jenkins
 metadata:
-  name: example
-  namespace: default
+  name: my-promise-request
 spec:
+  name: my-amazing-jenkins

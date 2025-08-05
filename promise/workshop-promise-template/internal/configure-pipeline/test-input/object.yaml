@@ -1,0 +1,6 @@
+apiVersion: promise.example.com/v1
+kind: jenkins
+metadata:
+  name: my-promise-request
+spec:
+  name: my-amazing-jenkins

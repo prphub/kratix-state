@@ -1,8 +1,13 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
 set -x
 
-# Add logic for pipeline here.
-# Example:
-# name="$(yq eval '.metadata.name' /input/object.yaml)"
-# sed "s/TBDNAME/${name}/g" /tmp/transfer/filename.yaml > /output/filename.yaml
+# Get the name from the Promise Custom resource
+instanceName=$(yq eval '.spec.name' /kratix/input/object.yaml)
+
+# Inject the name into the Jenkins resources
+find /tmp/transfer -type f -exec sed -i \
+  -e "s/<tbr-name>/${instanceName}/g" \
+  {} \;
+
+cp /tmp/transfer/* /kratix/output/
